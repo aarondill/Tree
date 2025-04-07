@@ -66,10 +66,9 @@ public class Tree {
    */
   public static void tree(String dir, int level) {
     Counter c = new Counter();
-    StringBuilder out = tree(Path.of(dir), 0, level, true, "", c);
-    out.append("\n");
-    out.append(c.dirs + " directories, " + c.files + " files\n");
-    System.out.println(out.toString());
+    tree(Path.of(dir), 0, level, true, "", c);
+    System.out.println();
+    System.out.println(c.dirs + " directories, " + c.files + " files");
   }
 
   private static List<Path> list(Path dir) {
@@ -80,37 +79,34 @@ public class Tree {
     }
   }
 
-  private static StringBuilder tree(Path f, int depth, int maxLevel, boolean isLastChild, String prefix, Counter c) {
-    StringBuilder sb = new StringBuilder();
+  private static void tree(Path f, int depth, int maxLevel, boolean isLastChild, String prefix, Counter c) {
     // Print the fancy graphical tree (after first file)
     if (depth > 0) {
       System.out.print(prefix);
-      if (isLastChild) sb.append("└");
-      else sb.append("├");
-      sb.append("── ");
+      if (isLastChild) System.out.print("└");
+      else System.out.print("├");
+      System.out.print("── ");
     }
     // Print the given name if depth is 0, else the file name only
-    if (depth == 0) sb.append(f);
-    else sb.append(f.getFileName());
-    sb.append('\n');
+    if (depth == 0) System.out.println(f);
+    else System.out.println(f.getFileName());
 
     // Count dirs and files for final output
     if (f.toFile().isDirectory()) c.dirs++;
     else c.files++;
 
     // If we're at the max level, we're done
-    if (maxLevel != 0 && depth >= maxLevel) return sb;
+    if (maxLevel != 0 && depth >= maxLevel) return;
     // we're done, this is a file
-    if (!f.toFile().isDirectory()) return sb;
+    if (!f.toFile().isDirectory()) return;
 
     List<Path> dirs = list(f);
     for (int i = 0; i < dirs.size(); i++) {
       Path d = dirs.get(i);
       String nbsp = "\u00a0"; // nbsp (match tree output)
       String newPrefix = depth > 0 ? prefix.concat(isLastChild ? "    " : "│" + nbsp + nbsp + " ") : "";
-      sb.append(tree(d, depth + 1, maxLevel, i == dirs.size() - 1, newPrefix, c));
+      tree(d, depth + 1, maxLevel, i == dirs.size() - 1, newPrefix, c);
     }
-    return sb;
   }
 
 }
