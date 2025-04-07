@@ -1,0 +1,49 @@
+plugins {
+  id("java")
+  id("application")
+}
+
+repositories { mavenCentral() }
+
+dependencies {
+    // Use JUnit Jupiter for testing.
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+test {
+  useJUnitPlatform()
+  testLogging.showStandardStreams = true
+  testLogging {
+    exceptionFormat = 'full'
+    events("passed", "skipped", "failed") 
+    afterSuite { desc, result ->
+      if (desc.parent) return // group the results in one
+      def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, " +
+        "${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+      def startItem = "|  ", endItem = "  |"
+      def repeatLength = startItem.length() + output.length() + endItem.length()
+      println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+    }
+  }
+}
+
+java { toolchain { languageVersion = JavaLanguageVersion.of(22) } }
+
+application { mainClass = "Tree" }
+
+
+task createProperties(dependsOn: processResources) {
+  doLast {
+    File props = project.layout.buildDirectory.file("resources/main/version.properties").get().asFile
+    props.parentFile.mkdirs()
+    props.withWriter { w ->
+        Properties p = new Properties()
+        p['version'] = project.version.toString()
+        p.store(w, null)
+    }
+  }
+}
+
+classes { dependsOn createProperties }
+
