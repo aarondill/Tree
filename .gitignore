@@ -3,7 +3,13 @@
 
 # Ignore Gradle build output directory
 build/
+app/bin/
 
 # Ignore IDEA/Eclipse/Buildship project files
 .settings/
 .project
+.classpath
+.buildpath
+kls_database.db
+
+*.class
