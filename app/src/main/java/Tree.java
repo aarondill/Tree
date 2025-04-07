@@ -2,15 +2,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import java.util.Properties;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 
 public class Tree {
-
-  private static String[] parseArgs(String[] args) {
-    if (args.length == 0) return new String[] {"."};
-    // TODO: real argument parsing
-    return args;
-  }
 
   final static public String VERSION = version();
 
@@ -27,12 +29,33 @@ public class Tree {
     return p.getProperty("version");
   }
 
-  public static void main(String[] args) {
-    String[] dirs = parseArgs(args);
-    System.out.println("Tree version " + VERSION);
-  }
-}
+  public static void main(String[] args) throws ParseException {
+    CommandLineParser parser = new DefaultParser();
+    Options options = new Options();
+    options.addOption("h", "help", false, "Print this help");
+    options.addOption("v", "version", false, "Print version");
+    options.addOption(Option.builder("L").longOpt("level").hasArg().desc("Set the level").type(Integer.class).build());
+    CommandLine cmd = parser.parse(options, args);
+    if (cmd.hasOption("help")) {
+      new HelpFormatter().printHelp("tree", options, true);
+      return;
+    }
+    if (cmd.hasOption("version")) {
+      System.out.println(Tree.VERSION);
+      return;
+    }
 
-enum Flags {
-  HELP, VERSION, VERBOSE, QUIET, DEBUG,
+    int level = cmd.hasOption("level") ? cmd.getParsedOptionValue("level") : 0;
+    List<String> dirs = cmd.getArgList().isEmpty() ? List.of(".") : cmd.getArgList();
+    for (String dir : dirs) {
+      Tree.tree(dir, level);
+    }
+  }
+
+  /**
+   * Recursively print the tree of a directory.
+   */
+  public static void tree(String dir, int level) {
+    System.out.println(dir);
+  }
 }
