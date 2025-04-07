@@ -7,9 +7,9 @@ import java.io.PrintStream;
 import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.Properties;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -63,50 +63,38 @@ class TreeTest {
    *   ├── a
    *   │   ├── b
    *   │   │   ├── c
+   *   │   │   │   └── file.txt
    *   │   │   └── d
+   *   │   │       └── file.txt
    *   │   └── e
+   *   │       └── file.txt
    *   └── f
    * </pre>
    *
-   * Then run tree with -L 2.
+   * Then run tree with -L 3.
    */
   @Test
   void matches() {
     try (var dir = Tmp.dir(null)) {
       Path d = dir.getPath();
-      String[] args = {"-L", "2", d.toAbsolutePath().toString()};
+      String[] args = {"-L3", d.toAbsolutePath().toString()};
       Stream.of("a/b/c", "a/b/d", "a/e", "f").map(d::resolve).map(Path::toFile).forEach(File::mkdirs);
+      Stream.of("a/b/c/file.txt", "a/b/d/file.txt", "a/e/file.txt").map(d::resolve).map(Path::toFile).forEach(t -> {
+        try {
+          t.createNewFile();
+        } catch (IOException e) { // I hate java
+        }
+      });
       String expected = tree(args).stripTrailing();
       Tree.main(args);
       String output = outContent.toString().stripTrailing();
-      System.setOut(originalOut);
-
-      System.out.println("EXPECTED:");
-      System.out.println(expected);
-      System.out.println("GOT:");
-      System.out.println(output);
-
-      String[] eLines = expected.split("\n"), oLines = output.split("\n");
-      for (int i = 0; i < Math.max(eLines.length, oLines.length); i++) {
-        if (i >= eLines.length) {
-          System.out.println(oLines[i] + "\t<--EXTRA!");
-          continue;
-        } else if (i >= oLines.length) {
-          System.out.println(eLines[i] + "\t<--MISSING!");
-          continue;
-        }
-        String eLine = eLines[i].stripTrailing(), oLine = oLines[i].stripTrailing();
-        System.out.println(eLine);
-        if (!eLine.equals(oLine)) {
-          System.out.println(oLine + "\t<--DIFF!");
-        }
-      }
 
       assertTrue(output.equals(expected));
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
+
 }
 
 class Tmp implements AutoCloseable {

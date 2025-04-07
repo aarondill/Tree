@@ -69,7 +69,9 @@ public class Tree {
     StringBuilder out = new StringBuilder();
     tree(Path.of(dir), 0, level, true, "", c, out);
     out.append("\n");
-    out.append(c.dirs + " directories, " + c.files + " files\n");
+    out.append(c.dirs + " director" + (c.dirs == 1 ? "y" : "ies"));
+    out.append(", ");
+    out.append(c.files + " file" + (c.files == 1 ? "" : "s"));
     System.out.print(out.toString());
   }
 
