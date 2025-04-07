@@ -37,6 +37,9 @@ task createProperties(dependsOn: processResources) {
   doLast {
     File props = project.layout.buildDirectory.file("resources/main/version.properties").get().asFile
     props.parentFile.mkdirs()
+    if (project.version.toString().equals("unspecified")) {
+      throw new GradleException("Please specify a version in the gradle.properties file.")
+    }
     props.withWriter { w ->
         Properties p = new Properties()
         p['version'] = project.version.toString()

@@ -1,6 +1,7 @@
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.invoke.MethodHandles;
 import java.util.Properties;
 
 public class Tree {
@@ -13,16 +14,16 @@ public class Tree {
 
   final static public String VERSION = version();
 
+  /** Get the program version on startup. */
   private static String version() {
-    Reader r = (new InputStreamReader(Tree.class.getResourceAsStream("/version.properties")));
     Properties p = new Properties();
-    try {
+    try (Reader r =
+        new InputStreamReader(MethodHandles.lookup().lookupClass().getResourceAsStream("/version.properties"))) {
       p.load(r);
     } catch (IOException e) {
       System.err.println("Error reading version.properties");
       e.printStackTrace();
     }
-    p.list(System.out);
     return p.getProperty("version");
   }
 

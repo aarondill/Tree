@@ -1,10 +1,17 @@
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Properties;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
 class TreeTest {
   @Test
-  void version() {
-    System.out.println("NOTE: There is no test for this app yet!");
-    assertTrue(true);
+  void version() throws IOException {
+    Reader gradelProperties = new InputStreamReader(getClass().getResourceAsStream("/version.properties"));
+    Properties properties = new Properties();
+    properties.load(gradelProperties);
+    String version = properties.getProperty("version");
+    assertTrue(version.equals(Tree.VERSION));
   }
 }
