@@ -2,8 +2,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.invoke.MethodHandles;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -29,13 +32,21 @@ public class Tree {
     return p.getProperty("version");
   }
 
-  public static void main(String[] args) throws ParseException {
+  public static void main(String[] args) {
     CommandLineParser parser = new DefaultParser();
     Options options = new Options();
     options.addOption("h", "help", false, "Print this help");
     options.addOption("v", "version", false, "Print version");
     options.addOption(Option.builder("L").longOpt("level").hasArg().desc("Set the level").type(Integer.class).build());
-    CommandLine cmd = parser.parse(options, args);
+    CommandLine cmd;
+    int level;
+    try {
+      cmd = parser.parse(options, args);
+      level = cmd.hasOption("level") ? cmd.getParsedOptionValue("level") : 0;
+    } catch (ParseException e) {
+      System.err.println("Unexpected error: " + e.getMessage());
+      return;
+    }
     if (cmd.hasOption("help")) {
       new HelpFormatter().printHelp("tree", options, true);
       return;
@@ -45,17 +56,65 @@ public class Tree {
       return;
     }
 
-    int level = cmd.hasOption("level") ? cmd.getParsedOptionValue("level") : 0;
     List<String> dirs = cmd.getArgList().isEmpty() ? List.of(".") : cmd.getArgList();
-    for (String dir : dirs) {
+    for (String dir : dirs)
       Tree.tree(dir, level);
-    }
   }
 
   /**
    * Recursively print the tree of a directory.
    */
   public static void tree(String dir, int level) {
-    System.out.println(dir);
+    Counter c = new Counter();
+    StringBuilder out = tree(Path.of(dir), 0, level, true, "", c);
+    out.append("\n");
+    out.append(c.dirs + " directories, " + c.files + " files\n");
+    System.out.println(out.toString());
   }
+
+  private static List<Path> list(Path dir) {
+    try (Stream<Path> s = Files.list(dir)) {
+      return s.sorted((p1, p2) -> p1.getFileName().toString().compareTo(p2.getFileName().toString())).toList();
+    } catch (IOException e) {
+      return List.of();
+    }
+  }
+
+  private static StringBuilder tree(Path f, int depth, int maxLevel, boolean isLastChild, String prefix, Counter c) {
+    StringBuilder sb = new StringBuilder();
+    // Print the fancy graphical tree (after first file)
+    if (depth > 0) {
+      System.out.print(prefix);
+      if (isLastChild) sb.append("└");
+      else sb.append("├");
+      sb.append("── ");
+    }
+    // Print the given name if depth is 0, else the file name only
+    if (depth == 0) sb.append(f);
+    else sb.append(f.getFileName());
+    sb.append('\n');
+
+    // Count dirs and files for final output
+    if (f.toFile().isDirectory()) c.dirs++;
+    else c.files++;
+
+    // If we're at the max level, we're done
+    if (maxLevel != 0 && depth >= maxLevel) return sb;
+    // we're done, this is a file
+    if (!f.toFile().isDirectory()) return sb;
+
+    List<Path> dirs = list(f);
+    for (int i = 0; i < dirs.size(); i++) {
+      Path d = dirs.get(i);
+      String nbsp = "\u00a0"; // nbsp (match tree output)
+      String newPrefix = depth > 0 ? prefix.concat(isLastChild ? "    " : "│" + nbsp + nbsp + " ") : "";
+      sb.append(tree(d, depth + 1, maxLevel, i == dirs.size() - 1, newPrefix, c));
+    }
+    return sb;
+  }
+
+}
+
+class Counter {
+  int dirs, files;
 }
