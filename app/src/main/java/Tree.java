@@ -66,9 +66,11 @@ public class Tree {
    */
   public static void tree(String dir, int level) {
     Counter c = new Counter();
-    tree(Path.of(dir), 0, level, true, "", c);
-    System.out.println();
-    System.out.println(c.dirs + " directories, " + c.files + " files");
+    StringBuilder out = new StringBuilder();
+    tree(Path.of(dir), 0, level, true, "", c, out);
+    out.append("\n");
+    out.append(c.dirs + " directories, " + c.files + " files\n");
+    System.out.print(out.toString());
   }
 
   private static List<Path> list(Path dir) {
@@ -79,17 +81,19 @@ public class Tree {
     }
   }
 
-  private static void tree(Path f, int depth, int maxLevel, boolean isLastChild, String prefix, Counter c) {
+  private static void tree(Path f, int depth, int maxLevel, boolean isLastChild, String prefix, Counter c,
+      StringBuilder sb) {
     // Print the fancy graphical tree (after first file)
     if (depth > 0) {
-      System.out.print(prefix);
-      if (isLastChild) System.out.print("└");
-      else System.out.print("├");
-      System.out.print("── ");
+      sb.append(prefix);
+      if (isLastChild) sb.append("└");
+      else sb.append("├");
+      sb.append("── ");
     }
     // Print the given name if depth is 0, else the file name only
-    if (depth == 0) System.out.println(f);
-    else System.out.println(f.getFileName());
+    if (depth == 0) sb.append(f);
+    else sb.append(f.getFileName());
+    sb.append('\n');
 
     // Count dirs and files for final output
     if (f.toFile().isDirectory()) c.dirs++;
@@ -105,7 +109,7 @@ public class Tree {
       Path d = dirs.get(i);
       String nbsp = "\u00a0"; // nbsp (match tree output)
       String newPrefix = depth > 0 ? prefix.concat(isLastChild ? "    " : "│" + nbsp + nbsp + " ") : "";
-      tree(d, depth + 1, maxLevel, i == dirs.size() - 1, newPrefix, c);
+      tree(d, depth + 1, maxLevel, i == dirs.size() - 1, newPrefix, c, sb);
     }
   }
 
